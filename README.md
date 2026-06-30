@@ -4,7 +4,7 @@
 
 * Arthur Fernandes Silva de Jesus - 221022471
 * Anne de Capdeville - 221031111
-* Nome Completo — Matrícula
+* Vitor Carvalho Pereira - 211062615
 
 
 ---
@@ -419,6 +419,14 @@ Abaixo apresentamos o levantamento bibliográfico de artigos científicos (Journ
 * **Resumo e Contribuição:** Este artigo detalha a implementação de um sistema IoT utilizando o microcontrolador ESP32 para receber dados de sensores via Bluetooth Low Energy (BLE) e retransmiti-los para a nuvem através do protocolo MQTT. Para o nosso projeto de fechadura inteligente, este estudo é de extrema relevância, pois valida a estabilidade do ESP32 no gerenciamento de conexões BLE locais e fundamenta tecnicamente a nossa proposta de trabalhos futuros: a integração da fechadura com a rede Wi-Fi para enviar *logs* de acesso em tempo real a um servidor remoto.
    * **Link do Artigo:** [Acessar artigo](https://doi.org/10.3390/fi14020057)
 
+9. **IoT-Based Smart Remote Door Lock and Monitoring System Using an Android Application**
+   * **Resumo e Contribuição:** Este artigo apresenta o projeto e a implementação de uma fechadura inteligente baseada em ESP32, controlada remotamente por um aplicativo Android e integrada a sensores de monitoramento da porta, atuador de travamento e notificações ao usuário. Diferentemente dos demais trabalhos levantados — que validam a arquitetura do ESP32 em domínios correlatos (irrigação, hidroponia, automação) —, este estudo aborda exatamente o mesmo caso de uso da nossa proposta: o controle de acesso eletrônico de uma porta. Ele fundamenta diretamente as decisões de *hardware* e a lógica de estados do nosso protótipo, comprovando a viabilidade de o ESP32 gerenciar o destravamento, monitorar o estado da porta e comunicar-se com o dispositivo móvel do usuário em tempo real.
+   * **Link do Artigo:** [Acessar artigo](https://doi.org/10.3390/engproc2024076085)
+
+10. **An improved authentication scheme for BLE devices with no I/O capabilities**
+   * **Resumo e Contribuição:** Este artigo propõe um esquema aprimorado de autenticação para dispositivos BLE desprovidos de capacidade de entrada/saída (sem teclado ou tela), cenário em que o modelo de pareamento *Just Works* fica exposto a ataques *Man-in-the-Middle*. Como a nossa fechadura inteligente é justamente um dispositivo BLE sem interface física de digitação, este estudo é diretamente aplicável: oferece uma alternativa concreta para reforçar a autenticação no pareamento entre o smartphone e o ESP32, mitigando as vulnerabilidades apontadas pelos *surveys* de segurança já citados ([5] e [7]) e embasando tecnicamente as contramedidas a serem implementadas no *firmware*.
+   * **Link do Artigo:** [Acessar artigo](https://doi.org/10.1016/j.comcom.2023.01.001)
+
 ---
 
 # 14. Referências Bibliográficas
@@ -432,6 +440,8 @@ Abaixo apresentamos o levantamento bibliográfico de artigos científicos (Journ
 * [6] PANWAR, G.; MISRA, S. Inside Bluetooth Low Energy (Gupta, N.) [Book Review]. *IEEE Wireless Communications*, IEEE, v. 24, n. 4, p. 2-3, ago. 2017. Disponível em: <https://ieeexplore.ieee.org/document/8014283>.
 * [7] LONZETTA, A. M. et al. Security Vulnerabilities in Bluetooth Technology as Used in IoT. *Journal of Sensor and Actuator Networks*, MDPI, v. 7, n. 3, p. 28, jul. 2018. Disponível em: <https://www.mdpi.com/2224-2708/7/3/28>.
 * [8] D'ORTONA, C.; TARCHI, D.; RAFFAELLI, C. Open-Source MQTT-Based End-to-End IoT System for Smart City Scenarios. *Future Internet*, MDPI, v. 14, n. 2, p. 57, fev. 2022. Disponível em: <https://www.mdpi.com/1999-5903/14/2/57>.
+* [9] SONAMONI, J. S. et al. IoT-Based Smart Remote Door Lock and Monitoring System Using an Android Application. *Engineering Proceedings*, MDPI, v. 76, n. 1, p. 85, 2024. Disponível em: <https://doi.org/10.3390/engproc2024076085>.
+* [10] GUPTA, C.; VARSHNEY, G. An improved authentication scheme for BLE devices with no I/O capabilities. *Computer Communications*, Elsevier, v. 200, p. 42-53, fev. 2023. Disponível em: <https://doi.org/10.1016/j.comcom.2023.01.001>.
 
 ### Documentação Técnica de Produtos Comerciais 
 
