@@ -20,7 +20,9 @@ const int PIN_BUZZER     = 13;
 
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
+#define OLED_ADDR 0x3C
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
+bool hasDisplay = false; // detectado em setup(); sem OLED, o feedback vai so pela serial
 
 // ---- BLE ----
 // O Wokwi nao faz ponte do radio BLE simulado com um celular real, entao em
@@ -47,32 +49,77 @@ unsigned long stateEnteredAt = 0;
 bool pendingGrant = false;
 bool doorIsOpen = false;
 
+// A task do BLE apenas sinaliza a escrita; o loop() e quem processa. Assim nao
+// alteramos estado nem imprimimos em outra task (evita corrida e logs misturados).
+volatile bool bleWritePending = false;
+String bleWriteValue;
+
 const unsigned long VALIDATE_MS    = 800;
 const unsigned long UNLOCK_HOLD_MS = 3000;
 const unsigned long DOOR_LIMIT_MS  = 8000;
 const unsigned long DENIED_MS      = 2000;
 const unsigned long CLOSING_MS     = 500;
 
+const char *stateName(State s) {
+  switch (s) {
+    case LOCKED:          return "TRANCADA";
+    case VALIDATING:      return "VALIDANDO";
+    case UNLOCKED:        return "ACESSO LIBERADO";
+    case DOOR_OPEN:       return "PORTA ABERTA";
+    case DOOR_OPEN_ALERT: return "ALERTA: PORTA ABERTA HA MUITO TEMPO";
+    case CLOSING:         return "FECHANDO";
+    case DENIED_ALERT:    return "ACESSO NEGADO";
+    case BREACH_ALERT:    return "INVASAO DETECTADA";
+  }
+  return "?";
+}
+
 void enterState(State s) {
   state = s;
   stateEnteredAt = millis();
+  Serial.println(String("[ESTADO] -> ") + stateName(s)); // uma linha unica
 }
 
 void requestAccess(bool granted) {
-  if (state != LOCKED) return;
+  if (state != LOCKED) {
+    Serial.println("[ACESSO] solicitacao ignorada (fechadura nao esta TRANCADA)");
+    return;
+  }
   pendingGrant = granted;
+  Serial.println(granted ? "[ACESSO] solicitacao AUTORIZADA"
+                         : "[ACESSO] solicitacao NEGADA");
   enterState(VALIDATING);
+}
+
+void triggerImpact() {
+  if (state == LOCKED) {
+    Serial.println("[SENSOR] impacto detectado com a porta trancada!");
+    enterState(BREACH_ALERT);
+  } else if (state == BREACH_ALERT) {
+    Serial.println("[SENSOR] alarme de invasao reconhecido manualmente");
+    enterState(LOCKED);
+  }
 }
 
 class AccessCallback : public BLECharacteristicCallbacks {
   void onWrite(BLECharacteristic *c) override {
-    String value = c->getValue().c_str();
-    requestAccess(value == ACCESS_KEY);
+    // Le direto dos bytes crus: em algumas versoes da lib o getValue() volta
+    // vazio dentro do onWrite, entao montamos a String a partir de getData().
+    size_t len = c->getLength();
+    uint8_t *data = c->getData();
+    String value;
+    for (size_t i = 0; i < len; i++) value += (char)data[i];
+    bleWriteValue = value;      // processado no loop(), nao aqui (task do BLE)
+    bleWritePending = true;
   }
 };
 
 class ServerCallback : public BLEServerCallbacks {
+  void onConnect(BLEServer *s) override {
+    Serial.println("[BLE] dispositivo conectado");
+  }
   void onDisconnect(BLEServer *s) override {
+    Serial.println("[BLE] dispositivo desconectado (reiniciando advertising)");
     s->getAdvertising()->start();
   }
 };
@@ -109,6 +156,7 @@ void setColor(bool r, bool g, bool b) {
 }
 
 void showMessage(const char *line1, const char *line2 = "") {
+  if (!hasDisplay) return; // sem OLED ligado o estado ja sai pela serial
   display.clearDisplay();
   display.setTextSize(2);
   display.setTextColor(SSD1306_WHITE);
@@ -122,8 +170,41 @@ void showMessage(const char *line1, const char *line2 = "") {
   display.display();
 }
 
+void printHelp() {
+  Serial.println();
+  Serial.println("=== SmartLockBLE - comandos pela serial (teste sem perifericos) ===");
+  Serial.println("  a = solicitacao de acesso AUTORIZADA");
+  Serial.println("  d = solicitacao de acesso NEGADA");
+  Serial.println("  o = alterna o reed switch (porta ABERTA / FECHADA)");
+  Serial.println("  i = simula o sensor de impacto");
+  Serial.println("  ? = mostra esta ajuda");
+  Serial.println("BLE real: escreva \"SMARTLOCK-KEY\" na characteristic para liberar.");
+  Serial.println("===================================================================");
+}
+
+void handleSerialCommands() {
+  while (Serial.available()) {
+    char c = Serial.read();
+    switch (c) {
+      case 'a': case 'A': requestAccess(true);  break;
+      case 'd': case 'D': requestAccess(false); break;
+      case 'o': case 'O':
+        doorIsOpen = !doorIsOpen;
+        Serial.print("[PORTA] reed switch -> ");
+        Serial.println(doorIsOpen ? "ABERTA" : "FECHADA");
+        break;
+      case 'i': case 'I': triggerImpact(); break;
+      case '?':           printHelp();     break;
+      default: break; // ignora \n, \r e teclas nao mapeadas
+    }
+  }
+}
+
 void setup() {
   Serial.begin(115200);
+  delay(200);
+  Serial.println();
+  Serial.println("=== SmartLockBLE iniciando ===");
 
   pinMode(PIN_RELAY, OUTPUT);
   pinMode(PIN_LED_R, OUTPUT);
@@ -138,23 +219,46 @@ void setup() {
   digitalWrite(PIN_RELAY, LOW);
   digitalWrite(PIN_BUZZER, LOW);
 
-  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
-  showMessage("SmartLock", "iniciando...");
+  // Detecta o OLED no barramento I2C; sem ele, evita travar em chamadas I2C.
+  Wire.begin();
+  Wire.beginTransmission(OLED_ADDR);
+  hasDisplay = (Wire.endTransmission() == 0);
+  Serial.print("[OLED] ");
+  Serial.println(hasDisplay ? "detectado (0x3C)" : "ausente - feedback apenas pela serial");
+  if (hasDisplay) {
+    display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR);
+    showMessage("SmartLock", "iniciando...");
+  }
 
   setupBLE();
+  Serial.println("[BLE] servidor ativo, anunciando como \"SmartLockBLE\"");
+  printHelp();
   enterState(LOCKED);
 }
 
 void loop() {
   unsigned long elapsed = millis() - stateEnteredAt;
 
+  handleSerialCommands();
+
+  if (bleWritePending) {
+    bleWritePending = false;
+    String value = bleWriteValue;
+    value.trim(); // tolera espaco/newline extra que o teclado do celular cola
+    Serial.print("[BLE] escrita recebida: \"");
+    Serial.print(value);
+    Serial.println("\"");
+    requestAccess(value == ACCESS_KEY);
+  }
+
   if (pressed(PIN_BTN_AUTH)) requestAccess(true);
   if (pressed(PIN_BTN_DENY)) requestAccess(false);
-  if (pressed(PIN_DOOR_BTN)) doorIsOpen = !doorIsOpen;
-  if (pressed(PIN_IMPACT_BTN)) {
-    if (state == LOCKED) enterState(BREACH_ALERT);
-    else if (state == BREACH_ALERT) enterState(LOCKED); // reconhecimento manual do alarme
+  if (pressed(PIN_DOOR_BTN)) {
+    doorIsOpen = !doorIsOpen;
+    Serial.print("[PORTA] reed switch -> ");
+    Serial.println(doorIsOpen ? "ABERTA" : "FECHADA");
   }
+  if (pressed(PIN_IMPACT_BTN)) triggerImpact();
 
   switch (state) {
     case LOCKED:
