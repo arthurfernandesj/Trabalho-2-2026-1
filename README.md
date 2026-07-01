@@ -349,6 +349,9 @@ Sensor Impacto
 
 ![Simulação Inicial](image.png)
 
+Foi realizado um teste inicial em uma ESP32 e a lógica segue correta:
+
+![Teste inicial](imagem3.png)
 ---
 
 # 11. Trabalhos Futuros
