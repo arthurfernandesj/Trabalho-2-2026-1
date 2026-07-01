@@ -26,6 +26,9 @@ Esses sistemas são amplamente utilizados em:
 * Salas de servidores;
 * Ambientes industriais.
 
+Exemplo de Smart Lock:
+![Smart Lock](imagem_2.png)
+
 ---
 
 ## Funções principais
@@ -342,7 +345,13 @@ Sensor Impacto
 
 ---
 
-# 10. Trabalhos Futuros
+# 10. Simulação Inicial
+
+![Simulação Inicial](image.png)
+
+---
+
+# 11. Trabalhos Futuros
 
 Possíveis melhorias incluem:
 
@@ -356,7 +365,7 @@ Possíveis melhorias incluem:
 
 ---
 
-# 11. Produtos Comerciais Relacionados
+# 12. Produtos Comerciais Relacionados
 
 * August Smart Lock Pro
 * Yale Assure Lock 2
@@ -366,7 +375,7 @@ Possíveis melhorias incluem:
 
 ---
 
-## 12. Comparativo com Produtos Similares do Mercado
+## 13. Comparativo com Produtos Similares do Mercado
 
 Para balizar o desenvolvimento do protótipo, analisamos 5 produtos comerciais líderes no segmento de Smart Locks. Esta análise evidencia que o padrão ouro da indústria utiliza BLE para interações de proximidade combinadas com baixo consumo energético.
 
@@ -382,7 +391,7 @@ As especificações e características técnicas detalhadas na tabela abaixo for
 
 ---
 
-# 13. Pesquisa Bibliográfica e Tecnológica
+# 14. Pesquisa Bibliográfica e Tecnológica
 
 Abaixo apresentamos o levantamento bibliográfico de artigos científicos (Journals) que fundamentam as tecnologias e as aplicações deste produto embarcado:
 
@@ -429,7 +438,7 @@ Abaixo apresentamos o levantamento bibliográfico de artigos científicos (Journ
 
 ---
 
-# 14. Referências Bibliográficas
+# 15. Referências Bibliográficas
 ### Artigos Científicos e Acadêmicos 
 
 * [1] SNEINEH, A. A.; SHABANEH, A. A. Design of a smart hydroponics monitoring system using an ESP32 microcontroller and the Internet of Things. *MethodsX*, Elsevier, v. 11, p. 102401, dez. 2023. Disponível em: <https://doi.org/10.1016/j.mex.2023.102401>.
